@@ -1,0 +1,50 @@
+- name: app setup
+  include_role:
+    name: common
+    tasks_from: app-setup
+
+- name: maven setup
+  include_role:
+    name: common
+    tasks_from: maven
+
+- name: Check if catalogue database exists
+  ansible.builtin.shell: |
+    mysql -h {{ MYSQL_HOST }} -u{{ MYSQL_ROOT_USER }} -p{{ MYSQL_ROOT_PASSWORD }} -e "USE cities; SHOW TABLES LIKE 'countries';"
+  register: mysql_db_check
+  ignore_errors: yes
+  changed_when: false
+
+- name: Show database check result
+  ansible.builtin.debug:
+    msg: "Database check result: {{ mysql_db_check.rc }} (0 means DB exists, non-zero means not exists)"
+
+# - name: Load schema, app-user, and master-data SQL scripts if DB not exists
+#   ansible.builtin.shell: |
+#     mysql -h {{ MYSQL_HOST }} -u{{ MYSQL_ROOT_USER }} -p{{ MYSQL_ROOT_PASSWORD }} < {{ item }}
+#   loop:
+#     - /app/db/schema.sql
+#     - /app/db/app-user.sql
+#     - /app/db/master-data.sql
+#   when: mysql_db_check.rc != 0
+
+- name: import data
+  tags: ## If you want to run particular task then use tags
+  - import
+  community.mysql.mysql_db:
+    name: all
+    login_user: root
+    login_password: RoboShop@1
+    login_host: mysql.daws2025.online
+    state: import
+    target: "{{ item }}"
+  loop:
+  - /app/db/schema.sql
+  - /app/db/app-user.sql
+  - /app/db/master-data.sql
+  when: mysql_db_check.rc != 0
+
+- name: systemd setup
+  include_role:
+    name: common
+    tasks_from: systemd

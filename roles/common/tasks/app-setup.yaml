@@ -1,0 +1,24 @@
+- name: create app directory
+  ansible.builtin.file:
+    path: /app
+    state: directory
+
+- name: create roboshop system user
+  ansible.builtin.user:
+    name: roboshop
+    shell: /sbin/nologin
+    system: true
+    home: /app
+
+- name: Download the application code
+  ansible.builtin.get_url:
+    url: "https://roboshop-artifacts.s3.amazonaws.com/{{ component }}-v3.zip"
+    dest: "/tmp/{{ component }}.zip"
+
+# This module thinks file exists on ansible control server, needs to extract on to remote machine({{component }})
+# remote_src: yes means file already exits in {{ component }} server
+- name: extract the code 
+  ansible.builtin.unarchive:
+    src: "/tmp/{{ component }}.zip"
+    dest: /app
+    remote_src: yes

@@ -1,0 +1,45 @@
+- name: app Setup
+  include_role:
+    name: common
+    tasks_from: app-setup
+
+- name: nodejs Setup
+  include_role:
+    name: common
+    tasks_from: nodejs
+
+- name: copying MongoDB repo
+  ansible.builtin.copy:
+    src: mongodb.repo
+    dest: /etc/yum.repos.d/mongo.repo
+
+- name: install MongoDB client
+  ansible.builtin.dnf:
+    name: mongodb-mongosh
+    state: present
+
+- name: check products loaded or not
+  ansible.builtin.shell: >
+    mongosh --host mongodb.daws2025.online --quiet --eval 'db.getMongo().getDBNames().indexOf("catalogue")'
+  register: catalogue_db_check
+
+- name: Show/print products count
+  ansible.builtin.debug:
+    msg: "Number of products loaded: {{ catalogue_db_check }}"
+
+- name: Load products data
+  ansible.builtin.shell: >
+    mongosh --host mongodb.daws2025.online < /app/db/master-data.js
+  when: catalogue_db_check.stdout | int < 0
+
+- name: systemd Setup
+  include_role:
+    name: common
+    tasks_from: systemd
+
+- name: deployment
+  tags:
+  - deployment
+  import_role:
+    name: common
+    tasks_from: deployment
