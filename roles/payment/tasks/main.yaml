@@ -1,9 +1,9 @@
-- name: app setup
+- name: application Setup
   include_role:
     name: common
     tasks_from: app-setup
 
-- name: python setup
+- name: "{{ component }} Setup"
   include_role:
     name: common
     tasks_from: python
@@ -12,3 +12,8 @@
   include_role:
     name: common
     tasks_from: systemd
+
+- name: start and enable service
+  include_role:
+    name: common
+    tasks_from: restart

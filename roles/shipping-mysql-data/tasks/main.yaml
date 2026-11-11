@@ -1,0 +1,69 @@
+- name: install MySQL client ## mentioned in loop
+  ansible.builtin.dnf:
+    name: mysql-server
+    state: present
+
+- name: Check if cities data exists or not
+  ansible.builtin.shell: |
+    mysql -h {{ mysql_host }} -uroot -p{{ mysql_root_password }} -e "USE cities; SHOW TABLES LIKE 'countries';" 
+    mysql -h {{ mysql_host }} -uroot -p{{ mysql_root_password }} -N -B -e "SELECT COUNT(*) FROM cities.cities;"
+  register: cities_countries_count
+  ignore_errors: yes
+  changed_when: false
+  tags:
+  - mysql
+
+- name: print cities & countries
+  ansible.builtin.debug:
+    msg: "Database check result: {{ cities_countries_count.rc }} (0 means DB exists, non-zero means not exists)"
+  tags:
+  - mysql
+
+# - name: Load schema, app-user, and master-data SQL scripts if DB not exists
+#   ansible.builtin.shell: |
+#     mysql -h {{ mysql_host }} -uroot -p{{ mysql_root_password }} < /app/db/schema.sql
+#     mysql -h {{ mysql_host }} -uroot -p{{ mysql_root_password }} < /app/db/app-user.sql
+#     mysql -h {{ mysql_host }} -uroot -p{{ mysql_root_password }} < /app/db/master-data.sql
+#   when: cities_countries_count.rc != 0 or cities_countries_count.stdout | int == 0
+
+- name: Load schema, app-user, and master-data SQL scripts if DB not exists
+  ansible.builtin.shell: |
+    mysql -h {{ mysql_host }} -uroot -p{{ mysql_root_password }} < {{ item }}
+  loop:
+    # - /app/db/schema.sql
+    - /app/db/app-user.sql
+    - /app/db/master-data.sql
+  when: cities_countries_count.rc != 0 or cities_countries_count.stdout | int == 0
+  tags:
+  - mysql
+
+# - name: Install PyMySQL and cryptography for Python3
+#   ansible.builtin.pip:
+#     name: "{{item}}"
+#     executable: pip3.9
+#   loop:
+#   - PyMySQL
+#   - cryptography
+
+# # - name: connect to mysql using app user
+# #   community.mysql.mysql_info:
+# #     login_user: shipping
+# #     login_password: {{ mysql_root_password }}
+# #     login_host: {{ mysql_host }}
+# #     login_db: cities
+
+# - name: import data
+#   tags: ## If you want to run particular task then use tags
+#   - import
+#   community.mysql.mysql_db:
+#     name: all
+#     login_user: root
+#     login_password: {{ mysql_root_password }}
+#     login_host: {{ mysql_host }}
+#     state: import
+#     target: "{{ item }}"
+#   loop:
+#   - /app/db/schema.sql
+#   - /app/db/app-user.sql
+#   - /app/db/master-data.sql
+#   when: cities_countries_count.rc != 0 or cities_countries_count.stdout | int == 0

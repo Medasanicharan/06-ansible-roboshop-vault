@@ -15,19 +15,38 @@
     state: started
     enabled: yes
 
-- name: remove html directory
+- name: find all contents inside the directory
+  ansible.builtin.find:
+    paths: /usr/share/nginx/html
+    recurse: true
+    hidden: true
+    file_type: any
+  register: directory_contents
+
+- name: Print all contents inside the directory
+  ansible.builtin.debug:
+    msg: "{{ directory_contents }}"
+
+- name: delete the discovered contents
   ansible.builtin.file:
-    path: /usr/share/nginx/html
+    path: "{{ item.path }}"
     state: absent
+  loop: "{{ directory_contents.files }}"
+
+# - name: remove html directory
+#   ansible.builtin.file:
+#     path: /usr/share/nginx/html
+#     state: absent
 
 - name: create html directory
   ansible.builtin.file:
     path: /usr/share/nginx/html
     state: directory
 
-- name: download frontend code
+- name: Download the application code
   ansible.builtin.get_url:
-    url: https://roboshop-artifacts.s3.amazonaws.com/frontend-v3.zip
+    url: https://raw.githubusercontent.com/daws-92s/roboshop-documentation/refs/heads/main/artifacts/frontend-{{ app_version }}.zip
+    # url: https://roboshop-artifacts.s3.amazonaws.com/frontend-v3.zip
     dest: /tmp/frontend.zip
 
 - name: unzip frontend code
@@ -38,12 +57,12 @@
 
 - name: remove default nginx conf
   ansible.builtin.file:
-    path: /etc/nginx/nginx.conf
+    path: /etc/nginx/default.d/roboshop.conf
     state: absent
 
 - name: copy roboshop ngnx conf
   ansible.builtin.template:
     src: nginx.conf.j2
-    dest: /etc/nginx/nginx.conf
+    dest: /etc/nginx/default.d/roboshop.conf
   notify:
     - Restart nginx

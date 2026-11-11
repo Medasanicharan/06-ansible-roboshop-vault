@@ -1,25 +1,83 @@
+- name: enable maven 3.9
+  command: dnf module enable maven:3.9 -y
+
 - name: install maven and mysql
   ansible.builtin.dnf:
     name: "{{item}}"
-    state: installed
+    # state: installed
+    state: present
   loop:
   - maven
+  - java-25-openjdk-devel
   - mysql
 
-- name: Install PyMySQL and cryptography for Python3
-  ansible.builtin.pip:
-    name: "{{item}}"
-    executable: pip3.9
-  loop:
-  - PyMySQL
-  - cryptography
+- name: Find Java 25 executable
+  ansible.builtin.shell: |
+    find /usr/lib/jvm -type f -path '*/bin/java' | grep 'java-25-openjdk' | head -1
+  register: java25_bin
+  changed_when: false
+
+- name: Find Java 25 compiler
+  ansible.builtin.shell: |
+    find /usr/lib/jvm -type f -path '*/bin/javac' | grep 'java-25-openjdk' | head -1
+  register: javac25_bin
+  changed_when: false
+
+- name: Set Java 25 as default
+  ansible.builtin.command: alternatives --set java {{ java25_bin.stdout }}
+  when: java25_bin.stdout != ""
+
+- name: Set Java 25 compiler as default
+  ansible.builtin.command: alternatives --set javac {{ javac25_bin.stdout }}
+  when: javac25_bin.stdout != ""
+
+- name: Get Java 25 JAVA_HOME
+  ansible.builtin.shell: |
+    dirname "$(dirname "$(readlink -f /usr/bin/java)")"
+  register: java_home
+  changed_when: false
+
+- name: Configure JAVA_HOME permanently
+  ansible.builtin.copy:
+    dest: /etc/profile.d/java.sh
+    content: |
+      export JAVA_HOME={{ java_home.stdout }}
+      export PATH=$JAVA_HOME/bin:$PATH
+    mode: '0644'
+
+- name: Check Maven version with Java 25
+  ansible.builtin.command: mvn --version
+  args:
+    chdir: /app
+  environment:
+    JAVA_HOME: "{{ java_home.stdout }}"
+    PATH: "{{ java_home.stdout }}/bin:{{ ansible_env.PATH }}"
+  register: mvn_version
+
+- name: Print Maven version
+  ansible.builtin.debug:
+    msg: "{{ mvn_version.stdout_lines }}"
+
+- name: Verify Java version
+  ansible.builtin.command: java -version
+  environment:
+    JAVA_HOME: "{{ java_home.stdout }}"
+    PATH: "{{ java_home.stdout }}/bin:{{ ansible_env.PATH }}"
+  register: java_version
+
+- name: Display Java version
+  ansible.builtin.debug:
+    msg: "{{ java_version.stderr_lines }}"
 
 - name: install maven dependencies
   ansible.builtin.command: mvn clean package
   args:
     chdir: /app
+  environment:
+    JAVA_HOME: "{{ java_home.stdout }}"
+    PATH: "{{ java_home.stdout }}/bin:{{ ansible_env.PATH }}"
 
 - name: rename jar file
-  ansible.builtin.command: "mv target/{{ component }}-1.0.jar {{ component }}.jar" 
+  ansible.builtin.command: mv target/shipping.jar shipping.jar 
   args:
     chdir: /app

@@ -1,5 +1,5 @@
-CATALOGUE_HOST: catalogue.daws2025.online
-USER_HOST: user.daws2025.online
-CART_HOST: cart.daws2025.online
-SHIPPING_HOST: shipping.daws2025.online
-PAYMENT_HOST: payment.daws2025.online
+# catalogue_host: catalogue.cloudnai.online
+# user_host: user.cloudnai.online
+# payment_host: payment.cloudnai.online
+# shipping_host: shipping.cloudnai.online
+# cart_host: cart.cloudnai.online

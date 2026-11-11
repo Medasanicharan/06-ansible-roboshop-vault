@@ -1,3 +1,6 @@
+- name: Enable mysql 8.4
+  ansible.builtin.command: dnf module enable mysql:8.4 -y
+
 - name: Install MySQL server
   ansible.builtin.dnf:
     name: mysql-server
@@ -9,9 +12,14 @@
     state: started
     enabled: yes
 
+- name: Install PyMySQL for Python3 
+  ansible.builtin.pip:
+    name: PyMySQL
+    executable: pip3.9
+
 - name: Check if MySQL root password works
   ansible.builtin.shell: |
-    mysql -h {{MYSQL_HOST}} -u root -p{{ MYSQL_ROOT_PASSWORD }} -e "SELECT 1;" >/dev/null 2>&1
+    mysql -h {{ mysql_host }} -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "SELECT 1;" >/dev/null 2>&1
   register: root_pass_check
   ignore_errors: yes
   changed_when: false
@@ -22,16 +30,16 @@
 
 - name: Setup MySQL root password if not set
   ansible.builtin.shell: |
-    mysql_secure_installation --set-root-pass "{{ MYSQL_ROOT_PASSWORD }}"
+    mysql_secure_installation --set-root-pass {{ mysql_root_password }}
   when: root_pass_check.rc != 0
   changed_when: true
 
 # - name: Set MySQL root password if not set
 #   community.mysql.mysql_user:
-#     login_user: "{{ MYSQL_ROOT_USER }}"
+#     login_user: root
 #     login_password: ''
-#     user: "{{ MYSQL_ROOT_USER }}"
+#     user: root
 #     host_all: yes
-#     password: "{{ MYSQL_ROOT_PASSWORD }}"
+#     password: '{{ mysql_root_password }}'
 #     state: present
 #   when: root_pass_check.rc != 0

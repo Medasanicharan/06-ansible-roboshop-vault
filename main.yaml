@@ -3,5 +3,13 @@
   hosts: "{{ component }}"
   # hosts: localhost
   # connection: local
+
+  pre_tasks:
+  - name: Download application code
+    ansible.builtin.include_role:
+      name: common
+      tasks_from: app-setup
+    when: component == "shipping"
+
   roles: # this will automatically load a folder called roles in current working directory.
   - "{{ component }}"

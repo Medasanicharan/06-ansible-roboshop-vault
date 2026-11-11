@@ -1,12 +1,17 @@
-- name: app Setup
+- name: application Setup
   include_role:
     name: common
     tasks_from: app-setup
 
-- name: nodejs Setup
+- name: "{{ component }} Setup"
   include_role:
     name: common
     tasks_from: nodejs
+
+- name: systemd setup
+  include_role:
+    name: common
+    tasks_from: systemd
 
 - name: copying MongoDB repo
   ansible.builtin.copy:
@@ -19,9 +24,11 @@
     state: present
 
 - name: check products loaded or not
-  ansible.builtin.shell: >
-    mongosh --host mongodb.daws2025.online --quiet --eval 'db.getMongo().getDBNames().indexOf("catalogue")'
+  ansible.builtin.command: >
+    mongosh --host "{{ mongodb_host }}" --quiet --eval 'db.getMongo().getDBNames().indexOf("catalogue")'
   register: catalogue_db_check
+# mongosh --host "{{ mongodb_host }}" --quiet --eval 'db.getMongo().getDBNames().indexOf("catalogue")'
+# mongosh --host "{{ mongodb_host }}" --quiet --eval 'db.getSiblingDB("catalogue").products.countDocuments()'
 
 - name: Show/print products count
   ansible.builtin.debug:
@@ -29,17 +36,10 @@
 
 - name: Load products data
   ansible.builtin.shell: >
-    mongosh --host mongodb.daws2025.online < /app/db/master-data.js
+    mongosh --host "{{ mongodb_host }}" < /app/db/master-data.js
   when: catalogue_db_check.stdout | int < 0
 
-- name: systemd Setup
+- name: start and enable service
   include_role:
     name: common
-    tasks_from: systemd
-
-- name: deployment
-  tags:
-  - deployment
-  import_role:
-    name: common
-    tasks_from: deployment
+    tasks_from: restart
