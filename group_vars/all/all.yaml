@@ -1,13 +1,17 @@
-## AMI credentials ##
+### AMI credentials ###
 # ansible_user: ec2-user
 # ansible_password: DevOps321
+## ansible vault ##
 ansible_user: "{{ vault_ansible_user }}"
 ansible_password: "{{ vault_ansible_password }}"
+## AWS secret manager ##
+ansible_user: "{{ lookup('amazon.aws.aws_secret', 'roboshop/dev/ansible', region='us-east-1') | from_json | json_query('ansible_user') }}"
+ansible_password: "{{ lookup('amazon.aws.aws_secret', 'roboshop/dev/ansible', region='us-east-1') | from_json | json_query('ansible_password') }}"
 
-## app version ##
+### app version ###
 app_version: v4
 
-## hosts ##
+### hosts ###
 mongodb_host: mongodb.cloudnai.online
 redis_host: redis.cloudnai.online
 catalogue_host: catalogue.cloudnai.online
@@ -19,26 +23,42 @@ shipping_host: shipping.cloudnai.online
 cart_host: cart.cloudnai.online
 frontend_host: frontend.cloudnai.online
 
-## mysql creds ##
+##creds ###
 # mysql_root_user: root
 # mysql_root_password: RoboShop@1
+## ansible vault ##
 mysql_root_user: "{{ vault_mysql_user }}"
 mysql_root_password: "{{ vault_mysql_password }}"
+## AWS secret manager ##
+mysql_root_user: "{{ lookup('amazon.aws.aws_secret', 'roboshop/dev/ansible', region='us-east-1') | from_json | json_query('mysql_root_user') }}"
+mysql_root_password: "{{ lookup('amazon.aws.aws_secret', 'roboshop/dev/ansible', region='us-east-1') | from_json | json_query('mysql_root_password') }}"
 
-## rabbitmq creds ##
+### rabbitmq creds ###
 # rabbitmq_user: roboshop
 # rabbitmq_password: roboshop123
+## ansible vault ##
 rabbitmq_user: "{{ vault_rabbitmq_user }}"
 rabbitmq_password: "{{ vault_rabbitmq_password }}"
+## AWS secret manager ##
+rabbitmq_user: "{{ lookup('amazon.aws.aws_secret', 'roboshop/dev/ansible', region='us-east-1') | from_json | json_query('rabbitmq_user') }}"
+rabbitmq_password: "{{ lookup('amazon.aws.aws_secret', 'roboshop/dev/ansible', region='us-east-1') | from_json | json_query('rabbitmq_password') }}"
 
-## shipping creds ##
+### shipping creds ###
 # shipping_db_user: shipping
 # shipping_db_password: RoboShop@1
+## ansible vault ##
 shipping_db_user: "{{ vault_shipping_db_user }}"
 shipping_db_password: "{{ vault_shipping_db_password }}"
+## AWS secret manager ##
+shipping_db_user: "{{ lookup('amazon.aws.aws_secret', 'roboshop/dev/ansible', region='us-east-1') | from_json | json_query('shipping_db_user') }}"
+shipping_db_password: "{{ lookup('amazon.aws.aws_secret', 'roboshop/dev/ansible', region='us-east-1') | from_json | json_query('shipping_db_password') }}"
 
-## payment creds ##
+### payment creds ###
 # amqp_user: roboshop
 # amqp_password: roboshop123
+## ansible vault ##
 amqp_user: "{{ vault_amqp_user }}"
 amqp_password: "{{ vault_amqp_password }}"
+## AWS secret manager ##
+amqp_user: "{{ lookup('amazon.aws.aws_secret', 'roboshop/dev/ansible', region='us-east-1') | from_json | json_query('amqp_user') }}"
+amqp_password: "{{ lookup('amazon.aws.aws_secret', 'roboshop/dev/ansible', region='us-east-1') | from_json | json_query('amqp_password') }}"
