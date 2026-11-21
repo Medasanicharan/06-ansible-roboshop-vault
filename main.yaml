@@ -1,8 +1,8 @@
 - name: "configure {{ component }}"
   become: yes
-  hosts: "{{ component }}"
-  # hosts: localhost
-  # connection: local
+  # hosts: "{{ component }}"
+  hosts: localhost
+  connection: local
 
   pre_tasks:
   - name: Download application code
